@@ -1,21 +1,25 @@
 package com.caydey.ffshare.utils
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.provider.OpenableColumns
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.caydey.ffshare.BuildConfig
 import com.caydey.ffshare.extensions.mediaCacheDir
+import timber.log.Timber
 import java.io.File
+import java.io.InputStream
 import java.util.*
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
-import android.net.Uri
-import android.provider.OpenableColumns
-import androidx.core.content.ContextCompat
-import com.caydey.ffshare.BuildConfig
-import timber.log.Timber
-import java.io.InputStream
 import kotlin.math.ln
 import kotlin.math.pow
 
@@ -31,7 +35,10 @@ class Utils(private val context: Context) {
         if (settings.compressedMediaName == Settings.CompressedMediaNameOpts.ORIGINAL) {
             // if getFilenameFromUri returns null default to randomFilename
             filename = getFilenameFromUri(uri) ?: getRandomFilename(fileExtension)
-            filename = filename.substringBeforeLast(".")+".${fileExtension.name.lowercase()}"
+            val baseName = filename.substringBeforeLast(".")
+            val ext = fileExtension.name.lowercase()
+            // apply user-defined prefix and suffix
+            filename = "${settings.originalNamePrefix}${baseName}${settings.originalNameSuffix}.${ext}"
         } else if (settings.compressedMediaName == Settings.CompressedMediaNameOpts.CUSTOM) {
            filename = "${settings.compressedMediaCustomName}.${fileExtension.name.lowercase()}"
         }
@@ -39,6 +46,61 @@ class Utils(private val context: Context) {
         val outputFile = File(makeCacheUUIDFolder(), filename)
         return Pair(outputFile, fileExtension)
     }
+
+    /**
+     * Save output file to DCIM/FFShare via MediaStore.
+     * Returns the new Uri if successful, null otherwise.
+     */
+    fun saveToOutputDirectory(outputFile: File, mediaType: MediaType): Uri? {
+        try {
+            val mimeType = getMimeType(mediaType)
+
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, outputFile.name)
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/FFShare/")
+                }
+            }
+
+            val collection = when {
+                isVideo(mediaType) -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                isImage(mediaType) -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                isAudio(mediaType) -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                else -> MediaStore.Files.getContentUri("external")
+            }
+
+            val newUri = context.contentResolver.insert(collection, contentValues) ?: return null
+            context.contentResolver.openOutputStream(newUri)?.use { out ->
+                outputFile.inputStream().use { it.copyTo(out) }
+            }
+            Timber.d("Saved to DCIM/FFShare: ${outputFile.name}")
+            return newUri
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to save to DCIM/FFShare")
+            return null
+        }
+    }
+
+    private fun getMimeType(mediaType: MediaType): String {
+        return when (mediaType) {
+            MediaType.MP4 -> "video/mp4"
+            MediaType.MKV -> "video/x-matroska"
+            MediaType.WEBM -> "video/webm"
+            MediaType.AVI -> "video/x-msvideo"
+            MediaType.JPEG, MediaType.JPG -> "image/jpeg"
+            MediaType.PNG -> "image/png"
+            MediaType.GIF -> "image/gif"
+            MediaType.WEBP -> "image/webp"
+            MediaType.MP3 -> "audio/mpeg"
+            MediaType.OGG -> "audio/ogg"
+            MediaType.AAC -> "audio/aac"
+            MediaType.WAV -> "audio/wav"
+            MediaType.OPUS -> "audio/opus"
+            else -> "*/*"
+        }
+    }
+
     private fun getOutputFileMediaType(inputFileMediaType: MediaType): MediaType {
         var outputMediaType: MediaType = MediaType.UNKNOWN
         if (isVideo(inputFileMediaType)) {
@@ -84,11 +146,31 @@ class Utils(private val context: Context) {
 
     val isReadPermissionGranted: Boolean
         get() {
+            // Android 13+ (API 33+): use granular READ_MEDIA_* permissions
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                val img = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES)
+                val vid = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VIDEO)
+                val aud = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_AUDIO)
+                return (img == PackageManager.PERMISSION_GRANTED ||
+                        vid == PackageManager.PERMISSION_GRANTED ||
+                        aud == PackageManager.PERMISSION_GRANTED)
+            }
+            // Android 12 and below: legacy READ_EXTERNAL_STORAGE
             val check = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
             return (check == PackageManager.PERMISSION_GRANTED)
         }
     fun requestReadPermissions(activity: Activity) {
-        ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)
+        // Android 13+ (API 33+): request granular media permissions
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(activity, arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_AUDIO
+            ), MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)
+        } else {
+            // Android 12 and below: legacy permission
+            ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)
+        }
     }
 
 

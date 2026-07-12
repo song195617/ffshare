@@ -24,13 +24,14 @@
     <string name="title_activity_logs">Logs</string>
 
     <string name="version">Version: %s</string>
-    <string name="flavor" tools:ignore="MissingTranslation">Flavor: %s</string>
+    <string name="flavor" tools:ignore="MissingTranslation">Version: %s (Full Edition)</string>
 
 
     <string name="app_description">Compress images and videos through ffmpeg before sharing them</string>
     <string name="introduction_line_0">App Created by caydey <a href="https://github.com/caydey/ffshare">github</a></string>
     <string name="introduction_line_1">Functionality (and code) inspired by Scrambled-Exif by juanitobananas <a href="https://gitlab.com/juanitobananas/scrambled-exif">gitlab</a></string>
     <string name="introduction_line_2">FFmpeg library used is ffmpeg-kit by arthenica <a href="https://github.com/arthenica/ffmpeg-kit">github</a></string>
+    <string name="introduction_line_3">Fork: <a href="https://github.com/song195617/ffshare">github.com/song195617/ffshare</a></string>
 
     <string name="select_file_button" tools:ignore="MissingTranslation">Select file</string>
 
@@ -65,6 +66,11 @@
 
     <string name="settings_compressed_media_custom_name">Custom media name</string>
     <string name="settings_compressed_media_custom_name_summary">Only applicable if "Custom" is selected for compressed media name</string>
+
+    <string name="settings_original_name_prefix">Filename prefix</string>
+    <string name="settings_original_name_prefix_summary"></string>
+    <string name="settings_original_name_suffix">Filename suffix</string>
+    <string name="settings_original_name_suffix_summary"></string>
 
     <string name="settings_convert_videos_to_mp4">Convert all video formats to mp4</string>
     <string name="settings_convert_audios_to_mp3">Convert all audio formats to mp3</string>

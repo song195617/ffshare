@@ -17,14 +17,22 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         }
     }
     private fun dynamicallyShowCustomName() {
-        // only show pref_compressed_media_custom_name if pref_compressed_media_name is "Custom"
         val customMediaNamePreference = findPreference<EditTextPreference>("pref_compressed_media_custom_name")
+        val prefixPreference = findPreference<EditTextPreference>("pref_original_name_prefix")
+        val suffixPreference = findPreference<EditTextPreference>("pref_original_name_suffix")
         val compressedMediaNamePreference = findPreference<ListPreference>("pref_compressed_media_name")
-        compressedMediaNamePreference?.setOnPreferenceChangeListener { _, value ->
+
+        fun updateVisibility(value: String?) {
             customMediaNamePreference?.isVisible = (value == "CUSTOM")
+            prefixPreference?.isVisible = (value == "ORIGINAL")
+            suffixPreference?.isVisible = (value == "ORIGINAL")
+        }
+
+        compressedMediaNamePreference?.setOnPreferenceChangeListener { _, value ->
+            updateVisibility(value as? String)
             true
         }
         // trigger update for initial load
-        compressedMediaNamePreference?.callChangeListener(compressedMediaNamePreference.value)
+        updateVisibility(compressedMediaNamePreference?.value)
     }
 }

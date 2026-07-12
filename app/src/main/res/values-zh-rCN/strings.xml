@@ -24,13 +24,14 @@
     <string name="title_activity_logs">日志</string>
 
     <string name="version">版本：%s</string>
-    <string name="flavor" tools:ignore="MissingTranslation">风味: %s</string>
+    <string name="flavor" tools:ignore="MissingTranslation">版本: %s (完整版)</string>
 
 
     <string name="app_description">在分享图片和视频之前，通过FFmpeg压缩它们</string>
     <string name="introduction_line_0">此应用由caydey制作：<a href="https://github.com/caydey/ffshare">GitHub</a></string>
     <string name="introduction_line_1">功能（和代码）由juanitobananas的Scrambled Exif启发：<a href="https://gitlab.com/juanitobananas/scrambled-exif">GitLab</a></string>
     <string name="introduction_line_2">使用的FFmpeg库为ARTHENICA的FFmpegKit：<a href="https://github.com/arthenica/ffmpeg-kit">GitHub</a></string>
+    <string name="introduction_line_3">Fork仓库：<a href="https://github.com/song195617/ffshare">github.com/song195617/ffshare</a></string>
 
     <string name="select_file_button" tools:ignore="MissingTranslation">选择文件</string>
 
@@ -64,7 +65,12 @@
     <string name="settings_compressed_media_name_summary">压缩后的文件将被命名成什么</string>
 
     <string name="settings_compressed_media_custom_name">自定义输出媒体名称</string>
-    <string name="settings_compressed_media_custom_name_summary">仅在“输出媒体名称”设置为“自定义”时有效</string>
+    <string name="settings_compressed_media_custom_name_summary">仅在"输出媒体名称"设置为"自定义"时有效</string>
+
+    <string name="settings_original_name_prefix">文件名前缀</string>
+    <string name="settings_original_name_prefix_summary"></string>
+    <string name="settings_original_name_suffix">文件名后缀</string>
+    <string name="settings_original_name_suffix_summary"></string>
 
     <string name="settings_convert_videos_to_mp4">始终将视频转换为MP4格式</string>
     <string name="settings_convert_audios_to_mp3">始终将音频转换为MP3格式</string>

@@ -67,12 +67,20 @@ class Settings(private val context: Context) {
         get() = preferences.getString(COMPRESSED_MEDIA_CUSTOM_NAME, "")!!
         set(value) = setPreference(COMPRESSED_MEDIA_CUSTOM_NAME, value)
 
+    var originalNamePrefix: String
+        get() = preferences.getString(ORIGINAL_NAME_PREFIX, "")!!
+        set(value) = setPreference(ORIGINAL_NAME_PREFIX, value)
+
+    var originalNameSuffix: String
+        get() = preferences.getString(ORIGINAL_NAME_SUFFIX, "_trans")!!
+        set(value) = setPreference(ORIGINAL_NAME_SUFFIX, value)
+
     var videoConversionOutput: Utils.MediaType // UNKNOWN for original
         get() {
             val preferencesString = preferences.getString(CONVERT_VIDEO_OUTPUT, Utils.MediaType.UNKNOWN.name)!!
             return Utils.MediaType.valueOf(preferencesString) // convert string to enum
         }
-        set(value) = setPreference(COMPRESSED_MEDIA_NAME, value.toString())
+        set(value) = setPreference(CONVERT_VIDEO_OUTPUT, value.toString())
     var imageConversionOutput: Utils.MediaType // UNKNOWN for original
         get() {
             val preferencesString = preferences.getString(CONVERT_IMAGE_OUTPUT, Utils.MediaType.UNKNOWN.name)!!
@@ -170,6 +178,8 @@ class Settings(private val context: Context) {
     companion object {
         const val COMPRESSED_MEDIA_NAME = "pref_compressed_media_name"
         const val COMPRESSED_MEDIA_CUSTOM_NAME = "pref_compressed_media_custom_name"
+        const val ORIGINAL_NAME_PREFIX = "pref_original_name_prefix"
+        const val ORIGINAL_NAME_SUFFIX = "pref_original_name_suffix"
         const val CONVERT_VIDEO_OUTPUT = "pref_convert_video_output"
         const val CONVERT_IMAGE_OUTPUT = "pref_convert_image_output"
         const val CONVERT_AUDIO_OUTPUT = "pref_convert_audio_output"

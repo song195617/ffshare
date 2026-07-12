@@ -20,6 +20,7 @@ import com.caydey.ffshare.R
 import com.caydey.ffshare.utils.logs.Log
 import com.caydey.ffshare.utils.logs.LogsDbHelper
 import timber.log.Timber
+import java.io.File
 import java.util.*
 
 
@@ -39,7 +40,7 @@ class MediaCompressor(private val context: Context) {
     fun compressSingleFile(
         activity: Activity,
         inputFileUri: Uri,
-        successHandler: (uri: Uri, inputFileSize: Long, outputFileSize: Long) -> Unit,
+        successHandler: (uri: Uri, inputFileSize: Long, outputFileSize: Long, outputFile: File?, sourceUri: Uri?) -> Unit,
         failureHandler: () -> Unit
     ) {
         val txtFfmpegCommand: TextView = activity.findViewById(R.id.txtFfmpegCommand)
@@ -174,7 +175,7 @@ class MediaCompressor(private val context: Context) {
                     outputFileCurrentSize
                 ))
                 // callback
-                successHandler(outputFileUri, inputFileSize, outputFileCurrentSize)
+                successHandler(outputFileUri, inputFileSize, outputFileCurrentSize, outputFile, inputFileUri)
             }
         }, { /* logs */ }, { statistics ->
             // update TextViews with stats
@@ -188,12 +189,14 @@ class MediaCompressor(private val context: Context) {
         })
     }
 
-    fun compressFiles(activity: Activity, inputFilesUri: ArrayList<Uri>, callback: (uris: ArrayList<Uri>) -> Unit) {
+    fun compressFiles(activity: Activity, inputFilesUri: ArrayList<Uri>, callback: (uris: ArrayList<Uri>, outputFiles: ArrayList<Pair<File, Uri>>, sourceUris: ArrayList<Uri>) -> Unit) {
         val txtCommandNumber: TextView = activity.findViewById(R.id.txtCommandNumber)
 
         val inputFilesCount = inputFilesUri.size
 
         val compressedFiles = ArrayList<Uri>()
+        val outputFilesList = ArrayList<Pair<File, Uri>>() // (outputFile, sourceUri)
+        val sourceUrisList = ArrayList<Uri>()
 
         var totalInputFileSize = 0L
         var totalOutputFileSize = 0L
@@ -214,10 +217,14 @@ class MediaCompressor(private val context: Context) {
                 compressSingleFile(activity, inputFilesUri[i], failureHandler = {
                     // if 1 file fails don't add it to compressedFiles array
                     iteratorFunction(i+1, true) // call to self with error flag true
-                }, successHandler = { uri, inputFileSize, outputFileSize ->
+                }, successHandler = { uri, inputFileSize, outputFileSize, outputFile, sourceUri ->
                     totalInputFileSize += inputFileSize
                     totalOutputFileSize += outputFileSize
                     compressedFiles.add(uri)
+                    if (outputFile != null && sourceUri != null) {
+                        outputFilesList.add(Pair(outputFile, sourceUri))
+                        sourceUrisList.add(sourceUri)
+                    }
                     iteratorFunction(i+1, false) // call to self with error flag false
                 })
             }
@@ -232,7 +239,7 @@ class MediaCompressor(private val context: Context) {
                         Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                     }
                 }
-                callback(compressedFiles)
+                callback(compressedFiles, outputFilesList, sourceUrisList)
             }
         }
         iteratorFunction(0, false) // start iterations

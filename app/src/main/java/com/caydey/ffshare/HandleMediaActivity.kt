@@ -9,11 +9,13 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.caydey.ffshare.extensions.parcelable
 import com.caydey.ffshare.extensions.parcelableArrayList
 import com.caydey.ffshare.utils.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE
 import com.caydey.ffshare.utils.MediaCompressor
+import com.caydey.ffshare.utils.Settings
 import com.caydey.ffshare.utils.Utils
 import timber.log.Timber
 
@@ -23,6 +25,13 @@ class HandleMediaActivity : AppCompatActivity() {
     // also without it there is a null error for applicationContext
     private val mediaCompressor: MediaCompressor by lazy { MediaCompressor(applicationContext) }
     private val utils: Utils by lazy { Utils(applicationContext) }
+    private val settings: Settings by lazy { Settings(applicationContext) }
+
+    // Launch share chooser and finish activity after it closes,
+    // so the process stays alive while the target app reads the FileProvider URI
+    private val shareLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        finish()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,11 +84,26 @@ class HandleMediaActivity : AppCompatActivity() {
             finish()
         } else {
             // callback
-            mediaCompressor.compressFiles(this, receivedMedia) { compressedMedia ->
+            mediaCompressor.compressFiles(this, receivedMedia) { compressedMedia, outputFiles, _ ->
+                // always save to DCIM/FFShare
+                if (outputFiles.isNotEmpty()) {
+                    var savedCount = 0
+                    for ((outputFile, sourceUri) in outputFiles) {
+                        val mediaType = utils.getMediaType(sourceUri)
+                        val result = utils.saveToOutputDirectory(outputFile, mediaType)
+                        if (result != null) savedCount++
+                    }
+                    if (savedCount > 0) {
+                        runOnUiThread {
+                            Toast.makeText(this, "已保存 $savedCount 个文件到 DCIM/FFShare", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
                 if (compressedMedia.isNotEmpty()) {
                     shareMedia(compressedMedia)
+                } else {
+                    finish()
                 }
-                finish()
             }
         }
     }
@@ -101,13 +125,12 @@ class HandleMediaActivity : AppCompatActivity() {
             shareIntent.putExtra(Intent.EXTRA_STREAM, mediaUris)
         }
 
-        // set mime for each file
-        mediaUris.forEach { mediaUri ->
-            shareIntent.setDataAndType(mediaUri, contentResolver.getType(mediaUri))
-        }
+        // set mime type from first file
+        val mimeType = contentResolver.getType(mediaUris[0]) ?: "*/*"
+        shareIntent.type = mimeType
 
         val chooser = Intent.createChooser(shareIntent, "media")
-        startActivity(chooser)
+        shareLauncher.launch(chooser)
     }
 
     private fun scheduleCacheCleanup() {

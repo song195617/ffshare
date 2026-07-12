@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.lblIntroductionLine0).movementMethod = LinkMovementMethod.getInstance()
         findViewById<TextView>(R.id.lblIntroductionLine1).movementMethod = LinkMovementMethod.getInstance()
         findViewById<TextView>(R.id.lblIntroductionLine2).movementMethod = LinkMovementMethod.getInstance()
+        findViewById<TextView>(R.id.lblIntroductionLine3).movementMethod = LinkMovementMethod.getInstance()
 
         // Select File button listener
         findViewById<Button>(R.id.btnSelectFile).setOnClickListener {

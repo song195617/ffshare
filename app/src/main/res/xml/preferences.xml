@@ -24,6 +24,19 @@
             android:title="@string/settings_compressed_media_custom_name"
             android:summary="@string/settings_compressed_media_custom_name_summary" />
 
+        <!-- Prefix/suffix for original filename -->
+        <EditTextPreference
+            android:key="pref_original_name_prefix"
+            android:defaultValue=""
+            android:title="@string/settings_original_name_prefix"
+            android:summary="@string/settings_original_name_prefix_summary" />
+
+        <EditTextPreference
+            android:key="pref_original_name_suffix"
+            android:defaultValue="_trans"
+            android:title="@string/settings_original_name_suffix"
+            android:summary="@string/settings_original_name_suffix_summary" />
+
         <SwitchPreference
             android:key="pref_copy_exif_tags"
             android:defaultValue="false"
